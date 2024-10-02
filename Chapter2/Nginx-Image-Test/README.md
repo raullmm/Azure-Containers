@@ -7,3 +7,11 @@ Los pasos serán
 - Desplegarla en una web app de Azure
 
 VIDEO PARA HOW TO AZURE
+
+Subir imagenes a tu docker Hub -->
+
+docker login
+
+docker tag nombre_imagen_local:version_imagen_local nombre_respositorio/nombre_imagen_repositorio:version_imagen_repositorio
+
+docker push nombre_respositorio/nombre_imagen_repositorio:version_imagen_repositorio

@@ -34,8 +34,8 @@ Write-Host "App Service Plan created successfully."
 # We specify the name of the app, the plan where it will reside, and the container to be deployed.
 # NOTE: The app name must be globally unique.
 
-$webAppName = "containersinazure"
-$containerImage = "whaakman/containerdemos:billingstatementsv3"
+$webAppName = "containersinazure-minijuegosTest1"
+$containerImage = "raulmorenoooo/minijuegos:v1"
 
 Write-Host "Creating the web app and deploying the container..."
 az webapp create `

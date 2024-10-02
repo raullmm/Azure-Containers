@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minijuego: Atrapa la Caja</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f1f1f1;
+            font-family: Arial, sans-serif;
+        }
+
+        #game-container {
+            position: relative;
+            width: 80%;
+            height: 80%;
+            border: 2px solid #333;
+            background-color: #fff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #box {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #ff5722;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        #box:hover {
+            transform: scale(1.1);
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        #timer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        #start-btn {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #game-over {
+            position: absolute;
+            font-size: 40px;
+            color: #333;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="score">Puntos: 0</div>
+    <div id="timer">Tiempo: 30</div>
+    <button id="start-btn">Empezar Juego</button>
+    <div id="box"></div>
+    <div id="game-over">¡Juego Terminado!</div>
+</div>
+
+<script>
+    const box = document.getElementById('box');
+    const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
+    const gameOverText = document.getElementById('game-over');
+    const startBtn = document.getElementById('start-btn');
+    const gameContainer = document.getElementById('game-container');
+    let score = 0;
+    let timeLeft = 30;
+    let gameInterval;
+    let timerInterval;
+
+    // Mover la caja a una posición aleatoria dentro del contenedor de juego
+    function moveBox() {
+        const containerWidth = gameContainer.offsetWidth - box.offsetWidth;
+        const containerHeight = gameContainer.offsetHeight - box.offsetHeight;
+        const randomX = Math.floor(Math.random() * containerWidth);
+        const randomY = Math.floor(Math.random() * containerHeight);
+        box.style.left = `${randomX}px`;
+        box.style.top = `${randomY}px`;
+    }
+
+    // Actualizar el puntaje
+    box.addEventListener('click', function () {
+        score++;
+        scoreDisplay.textContent = `Puntos: ${score}`;
+        moveBox();
+    });
+
+    // Iniciar el temporizador
+    function startTimer() {
+        timerInterval = setInterval(function () {
+            timeLeft--;
+            timerDisplay.textContent = `Tiempo: ${timeLeft}`;
+            if (timeLeft === 0) {
+                clearInterval(timerInterval);
+                clearInterval(gameInterval);
+                gameOver();
+            }
+        }, 1000);
+    }
+
+    // Mostrar el mensaje de juego terminado
+    function gameOver() {
+        box.style.display = 'none';
+        gameOverText.style.display = 'block';
+        startBtn.style.display = 'block';
+    }
+
+    // Iniciar el juego
+    startBtn.addEventListener('click', function () {
+        score = 0;
+        timeLeft = 30;
+        scoreDisplay.textContent = `Puntos: ${score}`;
+        timerDisplay.textContent = `Tiempo: ${timeLeft}`;
+        box.style.display = 'block';
+        gameOverText.style.display = 'none';
+        startBtn.style.display = 'none';
+        moveBox();
+        startTimer();
+        gameInterval = setInterval(moveBox, 1000); // Mover la caja cada 1 segundo
+    });
+</script>
+
+</body>
+</html>

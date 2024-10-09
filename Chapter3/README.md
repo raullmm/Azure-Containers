@@ -1,56 +1,71 @@
-Correr contenedores en Azure Function 
 
-Azure Function es un servicio implementado en Azure en 2013, este servicio cuenta con la propiedad de ser un servicio serveless (pagas por lo que consumes a la hora de correr código), es decir, para correr tu código, no necesitarías de una máquina corriendo las 24 horas, este servicio, ejecuta tu codigo y solo pagarás por esa ejecución. Para ejecutar una Azure Function hay dos maneras, utilizando los triggers y los bindings, puedes ejecutar una Azure function utilizando un trigger HTTP, donde a partir de un body (JSON) le pasas unos parámetros y se ejecutará la funcion con esos parámetros. Por otro lado los bindings vienen integrados en la Azure Function como por ejemplo ejecutarla por colas, cada x tiempo etc...
+# Correr Contenedores en Azure Function
 
-Este servicio no ha sido creado para correr contenedores, pero se pueden correr dentro del servicio. ¿ Cuando entran en juego los contenedores ? Cuando necesitas correr un código con un runtime que Azure Function no soporta. Ante de correr el contenedor, tenemos que tener en cuenta varias cosas de Azure Function. Este servicio cuenta con un cold start, eso quiere decir que el código solo podrá correr por 10 minutos, a los 10 minutos, el codigo dejará de correr y todo se perderá, datos, variables, procesos etc. Esto puede ser un problema, si tu tienes una imagen que pesa mucho y tarda en cargar o construirse 6 minutos, solo tienes 4 minutos para correr el script. Esto tiene solución, hay diferentes planes:
+**Azure Function** es un servicio implementado en Azure en 2013 que permite ejecutar código en un entorno *serverless*, es decir, solo pagas por lo que consumes a la hora de correr el código. No es necesario tener una máquina corriendo 24 horas al día. Este servicio ejecuta tu código cuando es necesario y pagas únicamente por esa ejecución.
 
-- Consumption Plan: Este es el plan mas básico para correr tu function app, aqui tenemos que tener en cuenta el cold start y diversas limitaciones que nos pueden impactar al desempeño de nuestro contenedor. Eficaz para funciones que se ejecuten en un periodo corto de tiempo entornos dinamicos.
+## Modos de Ejecución de Azure Function
 
-- Premium Plan: Este plan cuenta con pre-warmed workers, estos workers nunca estarán desalocados como en el caso de consumption plan, por lo que, podremos evitar ese cold start para ejecutar el contenedor. Obviamente, esto impacta en los costes de tu function app, pagarás por la CPU, memoria y recursos que tengas alocados. Eficaz para escernarios que tengas que correr Azure Function muy continuiamente.
+Azure Function se puede ejecutar mediante dos métodos principales:
 
-- Dedicated Plan: Esto es un plan para correr exactamente una App Service. Mismas caracteristicas.
+- **Triggers**: Un *trigger* (disparador) inicia la ejecución de una Azure Function. Un ejemplo común es el disparador HTTP, donde un cuerpo JSON (body) envía parámetros para la ejecución.
+  
+- **Bindings**: Los bindings están integrados en las Azure Functions y permiten ejecutar la función automáticamente en base a eventos, como colas o temporizadores.
 
-Para correr los contenedores, el cold start ya no es un problema, podemos seleccionar el plan Premium para evitar ese cold start y ya funcionaría perfecto.
+## Contenedores en Azure Function
 
-Utilizando el script que encontrarás en esta carpeta ./Deploy-AzureFunction-Container.ps1 , podrás desplegar tu contenedor en Azure function. Estaremos utilizando una imagen básica para desplegar la function de Azure, en el libro se utiliza Azure Deployment Center dentro de la funcion app para pullear una imagen desde el DockerHub. Esto según la documentación es también posible de hacer utilizando comandos CLI.
+Aunque Azure Function no fue diseñado específicamente para ejecutar contenedores, es posible hacerlo cuando necesitas usar un runtime no soportado. Sin embargo, hay algunas consideraciones importantes:
 
-También tenemos que tener en cuenta a la hora de crear nuestra imagen de docker para subirla a dockerHub, que está se tiene que hacer utilizando las herramientas para crear una function app (Azure Function Cool Tools) que podrás descargarla en esta URL: https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local
+- **Cold Start**: Azure Functions tienen un "cold start", lo que significa que solo pueden correr por 10 minutos. Si tu contenedor tarda 6 minutos en cargarse, solo tendrás 4 minutos para ejecutar el código restante. Para superar este problema, Azure ofrece varios planes:
 
-utilizando los comandos 
+### Planes Disponibles
 
- func init --worker-runtime dotnet –docker
- func new --name BillingStatements --template "HTTP trigger" --authlevel anonymous
+1. **Consumption Plan**: 
+   - Plan más básico.
+   - Incluye *cold start* y tiene limitaciones de tiempo.
+   - Adecuado para funciones de corta duración y entornos dinámicos.
 
-Tendrás la template para subir tu dockerfile a DockerHub y poder utilizar esa imagen a traves del Deployment Center como marca el libro.
+2. **Premium Plan**: 
+   - Incluye *pre-warmed workers* para evitar el *cold start*.
+   - Mayor costo, pero sin interrupciones para contenedores que requieren tiempos más largos.
 
-Pros y Cons
+3. **Dedicated Plan**: 
+   - Similar a App Service.
+   - Específico para aplicaciones que requieren tiempos de ejecución más largos y constantes.
 
-Antes de mencionar los pros y cons debemos de tener en cuenta que esta no es la solucion más optima para correr un contenedor, de echo, queremos todo lo contrario. 
+En el **Premium Plan**, el *cold start* ya no es un problema y los contenedores pueden ejecutarse de forma eficiente.
 
-Pros:
+## Desplegando Contenedores en Azure Function
 
-- Puede solucionar un problema dentro de tu entorno.
+Para desplegar un contenedor, puedes utilizar el script `./Deploy-AzureFunction-Container.ps1` que encontrarás en esta carpeta. Utilizaremos una imagen básica para desplegar la Function App en Azure. En este ejemplo, el libro sugiere usar Azure Deployment Center para obtener una imagen desde DockerHub, pero también se puede hacer mediante comandos CLI.
 
-Si tienes un entorno configurado donde solo se utilizan Function Apps y necesitas correr una parte del script en un runtime no permitido, tienes esta opción para adaptarte al entorno.
+### Pasos para Crear y Desplegar la Imagen:
 
-- Puede correr en tu Premium Plan existente
+1. **Crear la imagen de Docker**: Utiliza las Azure Function Core Tools para crear la imagen:
+   
+   ```bash
+   func init --worker-runtime dotnet --docker
+   func new --name BillingStatements --template "HTTP trigger" --authlevel anonymous
+   ```
 
-Si tienes ya un Premium plan contratado o un Dedicated Plan, puedes correr el contenedor sin necesidad de pagar otro plan diferente. No supondrá costes en este caso tener los contenedores corriendo mas que el que te cuesta mantener el Premium o Dedicated Plan.
+2. **Subir la imagen a DockerHub**: Una vez creada la imagen, puedes subirla a DockerHub para usarla en el **Deployment Center**.
 
-- Integración con Azure
+## Pros y Contras de Usar Contenedores en Azure Function
 
-Al ser un servicio que provee Azure tienes todas las ventajas de seguridad, conexiones con otros servicios, usuarios, permisos que pueda ofrecer Azure a la hora de integrar tu Funcion App. Todo esto se puede aprovechar
+### Pros:
+- **Adaptación al entorno**: Si solo puedes usar Function Apps y necesitas un runtime no soportado, esta opción te permite adaptarte sin cambiar de entorno.
+  
+- **Integración con Premium Plan existente**: Si ya tienes un plan Premium o Dedicated, puedes ejecutar contenedores sin costos adicionales por otros planes.
 
-Cons:
+- **Integración con Azure**: Aprovechas todas las ventajas de seguridad, conexiones con otros servicios, permisos, etc., que ofrece Azure.
 
-- Solo soporta Linux
+### Contras:
+- **Solo soporta Linux**: Actualmente, Azure Function App solo soporta contenedores en Linux.
 
-Azure Function App solo puede soportar Linux, aun no esta disponible correr contenedores Windows.
+- **Modificaciones en el código del contenedor**: Para desplegar un contenedor, debes seguir un proceso específico que incluye la creación de plantillas, lo que puede ser tedioso.
 
-- Modificar el codigo de tu contenedor.
+- **No es la mejor solución para contenedores**: Azure Function no está diseñado específicamente para contenedores, por lo que el manejo de errores y la interacción con el contenedor pueden ser limitados.
 
-Hemos visto que para desplegar un contenedor utilizando Azure Function necesitamos hacerlo de una manera particular, creado una funcion y una template para que la plataforma pueda ofrecernos el servicio correctamente, esto puede ser un poco tedioso a la hora de desplegar tus contenedores.
+## Consideraciones Finales
 
-- No es la mejor solución para hostear contenedores
+Esta solución no es la más óptima para contenedores, pero puede resolver necesidades específicas en entornos donde las Function Apps ya están integradas. Para aplicaciones que requieren mayor flexibilidad, es recomendable evaluar otras opciones como Azure Kubernetes Service (AKS) o App Services.
 
-Ya que azure function no esta hecho para desplegar contenedores, tenemos la problematica de que no hay una manera de desbugear errores, no es muy cómodo para manejar comandos, mirar cosas dentro del contenedor, comportamientos etc

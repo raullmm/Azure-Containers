@@ -11,7 +11,7 @@ Esta solución corre tanto contenedores Linux como Windows.
 Una cosa a destacar es que ACI, no solo puedes integrarlo con infinidad de recursos en Azure, si no que también puedes integrarlo con comandos de Docker CLI, es decir, con un comando como "docker run" puedes hacer correr un contenedor en ACI.
 
 - Infraestructura
- Containers groups: Los grupos de contenedores actuan como si fueran pods dentro del kubernetes. Son grupos de contenedores que comparten red, storage y namespaces, ademas de que se pueden ver entre sí, siempre y cuando corran en el mismo grupo de contenedores. Que esten en el mismo grupo de contenedores, significa que los contenedores corren en la misma maquina virtual. 
+ Crear un ACI significa crear un "Containers groups": Los grupos de contenedores actuan como si fueran pods dentro del kubernetes. Son grupos de contenedores que comparten red, storage y namespaces, ademas de que se pueden ver entre sí, siempre y cuando corran en el mismo grupo de contenedores. Que esten en el mismo grupo de contenedores, significa que los contenedores corren en la misma maquina virtual. 
 
  Este seria un ejemplo de lo que se crearía:
 
@@ -33,6 +33,24 @@ La limitación aquí, es que no puede estar privado y externo a la vez, en cuant
 
 Imagina que tienes una aplicacion e-commerce que tienes ventas, normalmente sabes cuanta carga tiene tu aplicación, pero al llegar Navidades, tienes una carga muy alta en un periodo de tiempo muy muy corto, no te da tiempo a escalar tu aplicación y tampoco quieres implementar mas maquinas para soportarla por que las estarías desaprovechando en los otros periodos del año. Esto se puede solucionar usando ACI como servicio de Kubelet. Desde tu cluster de Kubernetes, cuando llegue navidades, puedes integrarlo con ACI para que kubernetes mande a crear Azure Containers para que empiecen a trabajar, una vez que la carga a la aplicación se reduzca Kubernetes escalará hacia abajo tu aplicación automaticamente. 
 
+- Uso de YAML
+
+En esta carpeta Chapter4 puedes encontrar un archivo yaml llamado example-ACI-yaml.yml con el cual puedes desplegar un ACI con dos contenedores en ese caso utilizando YAML. 
+
+El comando para hacerlo seria:
+
+- az container create `
+    --resource-group "rg-containers-aci" `
+    --file aci.yaml
+
+
+- Pros y Contras de ACI
+
+ACI te cobra por segundos, como podemos controlar cuanta CPU y Memoria utilizamos, Azure nos cobrará por estos recursos, lo cual lo convierte en una opcion muy barata. 
+Es extremadamente rápido para pullear tus imagenes y manejarlas, esto es debido a que este servicio solo se ha creado para manejar imagenes. 
+Puedes integrarlo con Logic Apps.
+Lo contenedores pueden estar separados por grupos, por lo que puedes tener flexibilidad y estructuracion en tu solucion.
+Puedes integrarlo con VNET para que sea mas privado y flexible dentro de Azure.
 
 
 

@@ -1,57 +1,90 @@
-Azure Container Instances for serveless Containers
+# Azure Container Instances: Serverless Containers
 
-En 2017 fue integrado este servicio en Azure gracias a la famosa llegada del serverless. Este servicio es utlizado para multitud de arquitecturas.
+En 2017, Azure introdujo el servicio **Azure Container Instances (ACI)** como parte de la tendencia serverless. Este servicio se utiliza ampliamente en diversas arquitecturas modernas.
 
-- Entendiendo Azure Container Instances
+## Introducción a Azure Container Instances
 
-Este servicio ha sido creado para promover soluciones a aplicaciones cloud-native. ACI (Azure Container Instance) es una solución para correr tus contenedores de una forma aislada y segura, estos contenedores correrian en una maquina virtual donde no te harías cargo del hardware, del sistema operativo, del patching etc
+Azure Container Instances (ACI) es una solución diseñada para aplicaciones cloud-native, ofreciendo la capacidad de ejecutar contenedores de forma aislada y segura. Al usar ACI, no necesitas preocuparte por la gestión del hardware, sistema operativo, parches, entre otros aspectos de la infraestructura subyacente. 
 
-Esta solución corre tanto contenedores Linux como Windows.
+**Características principales:**
+- Compatible con contenedores Linux y Windows.
+- Integración con diversos servicios de Azure.
+- Uso de comandos Docker CLI como `docker run` para desplegar contenedores en ACI.
 
-Una cosa a destacar es que ACI, no solo puedes integrarlo con infinidad de recursos en Azure, si no que también puedes integrarlo con comandos de Docker CLI, es decir, con un comando como "docker run" puedes hacer correr un contenedor en ACI.
+## Infraestructura
 
-- Infraestructura
- Crear un ACI significa crear un "Containers groups": Los grupos de contenedores actuan como si fueran pods dentro del kubernetes. Son grupos de contenedores que comparten red, storage y namespaces, ademas de que se pueden ver entre sí, siempre y cuando corran en el mismo grupo de contenedores. Que esten en el mismo grupo de contenedores, significa que los contenedores corren en la misma maquina virtual. 
+Crear un ACI, significa crear un "**Container Group**" (grupo de contenedores). Estos grupos funcionan de manera similar a los pods en Kubernetes. Los contenedores dentro de un grupo comparten:
+- **Red**
+- **Almacenamiento**
+- **Espacios de nombres (namespaces)**
 
- Este seria un ejemplo de lo que se crearía:
+Los contenedores dentro de un mismo grupo pueden comunicarse entre sí y comparten la misma máquina virtual.
 
- ![alt text](image.png)
+### Ejemplo de Container Group
 
- ¿Como funcionan los recursos dentro de esta maquina virtual?
+![Ejemplo de Container Group](image.png)
 
- Segun la región, la maquina virtual que va a correr tus contenedores puede tener limites de CPU y memoria, por regla general, no puede tener mas de 4 vCPU y 16 GB de Memoria. Esto quiere decir que los contenedores que esten corriendo dentro de esa maquina virtual no pueden consumir mas de esos recursos.
+### Recursos en la Máquina Virtual
 
- Para ello se establecen request and limits en los contenedores, que haces mas manejable y facil la convivencia de contenedores sin que se perjudiquen por los recursos. Si metes dos contenedores que tienen un request de 1 CPU y 3 GB de memoria, la maquina virtual alojará 2 CPU y 6 GB de memoria y pagarás por eso. Como buena práctica, es importante dejar siempre margen de recursos en la maquina virtual, no saturarla con los contenedores.
+Los recursos de la máquina virtual donde corren los contenedores tienen límites predefinidos según la región. En general:
+- Máximo: **4 vCPU** y **16 GB de memoria RAM**.
+- Los contenedores deben respetar estos límites.
 
- - Networking
+**Buenas prácticas:**
+- Define *request* y *limits* para cada contenedor, facilitando la convivencia sin conflictos de recursos.
+- Deja un margen de recursos en la máquina virtual para evitar saturaciones.
 
-Cuando crear un ACI normalmente se exponen public endpoints para exponer tu contenedor hacia el exterior. Esto puede cambiar, puede implementarle una VNET de azure para hacerlo privado, asi será mas facil la comunicación entre servicios dentro de Azure. Por ejemplo, esta implementacion viene bien si se tiene una aplicacion donde el frontend esta corriendo en una Web App y la SQL esta corriendo en el servicio SQL de azure, nos conviene tener el backend en el ACI en una VNET privada de Azure
+### Ejemplo:
+Si creas dos contenedores con un request de 1 vCPU y 3 GB de memoria cada uno, la máquina virtual asignará 2 vCPU y 6 GB de memoria, y pagarás únicamente por estos recursos.
 
-La limitación aquí, es que no puede estar privado y externo a la vez, en cuanto metemos nuestro ACI en una VNET de azure, pierde el acceso al public endpoint. Esto se puede arreglar utiliando alguna implementación de Azure relacionada con redes.
+## Networking
 
-- Utilizarlo con Azure Kubernetes Service
+### Endpoints Públicos y Privados
+Por defecto, ACI expone endpoints públicos para acceder al contenedor. Sin embargo, es posible integrarlo con una VNET de Azure para hacerlo privado, mejorando la comunicación interna entre servicios en Azure.
 
-Imagina que tienes una aplicacion e-commerce que tienes ventas, normalmente sabes cuanta carga tiene tu aplicación, pero al llegar Navidades, tienes una carga muy alta en un periodo de tiempo muy muy corto, no te da tiempo a escalar tu aplicación y tampoco quieres implementar mas maquinas para soportarla por que las estarías desaprovechando en los otros periodos del año. Esto se puede solucionar usando ACI como servicio de Kubelet. Desde tu cluster de Kubernetes, cuando llegue navidades, puedes integrarlo con ACI para que kubernetes mande a crear Azure Containers para que empiecen a trabajar, una vez que la carga a la aplicación se reduzca Kubernetes escalará hacia abajo tu aplicación automaticamente. 
+#### Ejemplo de uso:
+En una aplicación con:
+- **Frontend**: Web App.
+- **Base de datos**: Azure SQL Database.
 
-- Uso de YAML
+El backend puede ejecutarse en ACI dentro de una VNET privada para optimizar la comunicación y seguridad.
 
-En esta carpeta Chapter4 puedes encontrar un archivo yaml llamado example-ACI-yaml.yml con el cual puedes desplegar un ACI con dos contenedores en ese caso utilizando YAML. 
+**Limitación:**
+Si un ACI está en una VNET, pierde el acceso al endpoint público. Esto puede resolverse mediante servicios adicionales como:
+- Application Gateway.
+- Load Balancer HTTP/HTTPS.
+- Front Door.
 
-El comando para hacerlo seria:
+## Integración con Azure Kubernetes Service (AKS)
 
-- az container create `
-    --resource-group "rg-containers-aci" `
+Un caso común de uso es escalar aplicaciones en picos de carga. Por ejemplo:
+- Una aplicación de e-commerce tiene carga moderada la mayor parte del año, pero durante eventos como Navidad, experimenta picos breves e intensos.
+
+Con ACI:
+- AKS puede usar ACI como servicio de Kubelet para escalar dinámicamente.
+- Una vez que la carga disminuye, Kubernetes reduce automáticamente los recursos.
+
+## Despliegue con YAML
+
+En la carpeta `Chapter4`, encontrarás un archivo llamado `example-ACI-yaml.yml` para desplegar un ACI con dos contenedores utilizando YAML. El comando para desplegarlo es:
+
+```bash
+az container create \ 
+    --resource-group "rg-containers-aci" \ 
     --file aci.yaml
+```
 
+## Pros y Contras de ACI
 
-- Pros y Contras de ACI
+### Pros
+- **Cobro por uso:** Pago por segundos según el uso de CPU y memoria, haciéndolo económico.
+- **Velocidad:** Rápido para gestionar y ejecutar imágenes de contenedores.
+- **Integración:** Compatible con Logic Apps y VNETs para soluciones privadas.
+- **Flexibilidad:** Agrupación de contenedores por grupos, facilitando la estructura de las soluciones.
 
-ACI te cobra por segundos, como podemos controlar cuanta CPU y Memoria utilizamos, Azure nos cobrará por estos recursos, lo cual lo convierte en una opcion muy barata. 
-Es extremadamente rápido para pullear tus imagenes y manejarlas, esto es debido a que este servicio solo se ha creado para manejar imagenes. 
-Puedes integrarlo con Logic Apps.
-Lo contenedores pueden estar separados por grupos, por lo que puedes tener flexibilidad y estructuracion en tu solucion.
-Puedes integrarlo con VNET para que sea mas privado y flexible dentro de Azure.
-
-
+### Contras
+- **Limitaciones de recursos:** Máximo de 4 vCPU y 16 GB por grupo de contenedores.
+- **Restricciones de endpoint:** No permite endpoints públicos y privados simultáneamente sin servicios adicionales.
+- **Escalado manual:** Requiere pipelines externas para automatizar tareas como escalar y detener grupos de contenedores.
 
 

@@ -1,39 +1,70 @@
-Azure Container Apps for Serverless Kubernetes
+# Azure Container Apps for Serverless Kubernetes
 
-Nacio en noviembre de 2021, es un servicio nuevo de Azure totalmente serverless que ha llegado como revolución para correr tus contenedores.
+Azure Container Apps (ACA), lanzado en noviembre de 2021, es un servicio serverless de Azure diseñado para ejecutar contenedores. Este servicio es manejado por Kubernetes, pero con la particularidad de que el clúster es administrado por Microsoft, permitiéndote concentrarte únicamente en tus contenedores.
 
-Es importante destacar que Azure Container Apps (ACA) es manejado por Kubernetes, pero con la diferencia de que el cluster lo maneja Microsoft, solo te preocupas por el contenedor en sí.
-Al ser manejado por Kubernetes, ACA utiliza varios opensources, como puede ser KEDA, Darp y Envoy (Igress Nginx), que aunque nosotros no tengamos que manejar estos servicios es importante saberlo.
-Al crear un ACA también podrás disfrutar de un FQDN Fully Qualified Domain Name, que podrás cambiar por tu dominio y certificado correspondiente.
+ACA utiliza varias herramientas open-source como KEDA, Dapr y Envoy (Ingress Nginx). Aunque no es necesario gestionar estos componentes directamente, es importante conocer su uso. Además, al crear un ACA, obtendrás un FQDN (Fully Qualified Domain Name) que puedes personalizar con tu propio dominio y certificado.
 
-Vamos a ver los componentes de este servicio:
+---
+ 
+## Componentes del Servicio
 
-- Environment 
+### Environment
+- Los **environments** son unidades de agrupación donde se despliegan los ACA. 
+- Funcionan de forma similar a los Namespaces en Kubernetes.
+- Comparten **VNET** y **Log Analytics Workspace** en Azure.
+- Se recomienda agrupar en un mismo environment los ACA que estén relacionados entre sí por conexiones o funcionalidad. En caso contrario, deberían separarse en diferentes environments.
+- **Nota**: No se paga por los environments creados, solo por los ACA desplegados.
 
-El servicio se divide en environemnts donde son desplegados los ACA, estos environments actuan parecido al Namespace en Kubernetes. Comparten VNET y Log Analitycs Workspace en Azure, es conveniente que los ACA que esten dentro de un environemnt tengan relacion entre sí, ya sea por que se necesitan, por que establezcan conexión o son de una misma aplicación, por el contrario, deberían de separarse en diferentes environemnts. Una cosa importante, es que no se tienen que pagar por Environments creados en el servicio, si no por ACA desplegados.
+---
 
-- Revisions
+### Revisions
+- Una **revision** puede gestionar uno o varios contenedores.
+- Cada cambio en el ACA genera una nueva revision, encargada de implementar la nueva configuración o imagen y mantener el ACA activo.
+- Similar a los ReplicaSets en Kubernetes.
 
-Una revisions puede manejar uno o varios contenedores.
-A la hora de ejecutar un cambio en nuestro ACA se creará una nueva revision con ese cambio, las revisions se encargaran de ejecutar este cambio de configuracion o imagen y mantendrán vivo nuestro ACA. Son parecido a lo que llamamos en kubernetes Replicaset. 
-Cambios que ejecutarán una nueva revision:
-    - UPGRADEAR la imagen
-    - Añadir reglas de escalado KEDA
-    - Cambios en la configuracion de Dapr
-    - Cualquier tipo de cambio en la template del contenedor
+#### Cambios que generan una nueva revision:
+1. Actualización de la imagen.
+2. Adición de reglas de escalado con KEDA.
+3. Cambios en la configuración de Dapr.
+4. Modificaciones en la plantilla del contenedor.
 
-Cambios que no crearán una nueva revisión:
-    - Modificar reglas o activar/desactivar Ingress
-    - Cambiar los valores de los secretos
-    - Cualquier cambio fuera del template del contendor
+#### Cambios que **no** generan una nueva revision:
+1. Modificación de reglas o activación/desactivación de Ingress.
+2. Cambios en los valores de los secretos.
+3. Cualquier cambio fuera de la plantilla del contenedor.
 
-- Contenedores
+---
 
-Algunas de las caracteristicas destacables a tener en cuenta de los Contenedores en este servicio:
-    - Puedes correr cualquier tipo de imagen mientras sea linux-based x86/64 (linux/arm64)
-    - Para exponer tu apicación al exterior solo están disponibles los puertos 80 y 443
-    - Si el contenedor crashea, ACA lo va a crear de nuevo otra vez automaticamente.
+### Contenedores
+#### Características destacadas:
+1. Se puede ejecutar cualquier tipo de imagen siempre que sea **Linux-based x86/64** (linux/arm64).
+2. Solo están disponibles los puertos **80** y **443** para exponer aplicaciones.
+3. Si un contenedor falla, ACA lo reinicia automáticamente.
 
-Sabiendo esto la infraestructura sería de esta manera:
+---
 
-![alt text](image.png)
+## Infraestructura
+
+La infraestructura de ACA se organiza de la siguiente manera:
+
+![Infraestructura de ACA](image.png)
+
+---
+
+## Pros y Contras
+
+### Pros:
+1. **Rapidez**: ACA permite ejecutar contenedores en segundos con pocos comandos. Ideal para pruebas rápidas.
+2. **Microservicios**: Perfecto para aplicaciones divididas en múltiples contenedores en entornos independientes.
+3. **Mayor control**: Flexibilidad en las reglas de entrada/salida mediante Ingress, con monitoreo individual para cada contenedor.
+4. **Soluciones cloud nativas**: Herramientas como KEDA y Dapr optimizan el escalado y la integración en la nube, reduciendo costos.
+
+### Contras:
+1. **En preview**: El servicio aún está en fase de prueba.
+2. **Puertos internos limitados**: Solo se pueden usar los puertos **80** y **443**, lo que complica la conexión entre contenedores que utilicen otros puertos.
+3. **Cold start**: Como cualquier servicio serverless, los tiempos de arranque inicial pueden ser lentos.
+4. **Falta de YAML/JSON**: La ausencia de lenguajes estándar como YAML/JSON dificulta la migración a Kubernetes, requiriendo tareas manuales.
+
+---
+
+Azure Container Apps ofrece una solución flexible y eficiente para ejecutar contenedores en un entorno serverless, con características que potencian los microservicios y reducen la complejidad operativa. Sin embargo, sus limitaciones actuales requieren consideración al elegirlo como plataforma para aplicaciones críticas.
